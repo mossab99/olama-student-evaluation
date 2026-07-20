@@ -26,7 +26,6 @@ final class Olama_Student_Evaluation_Plugin {
         }
 
         Olama_Student_Evaluation_DB::install();
-        self::add_capabilities();
         update_option('olama_student_evaluation_db_version', OLAMA_STUDENT_EVALUATION_VERSION);
     }
 
@@ -62,41 +61,7 @@ final class Olama_Student_Evaluation_Plugin {
             return;
         }
         Olama_Student_Evaluation_DB::install();
-        self::add_capabilities();
         update_option('olama_student_evaluation_db_version', OLAMA_STUDENT_EVALUATION_VERSION);
-    }
-
-    public static function add_capabilities() {
-        $manager_caps = array(
-            'olama_access_evaluation',
-            'olama_manage_evaluation_students',
-            'olama_manage_evaluation_progress',
-            'olama_manage_evaluation_mgmt',
-            'olama_manage_attendance',
-        );
-        $teacher_caps = array(
-            'olama_access_evaluation',
-            'olama_manage_evaluation_students',
-            'olama_manage_evaluation_progress',
-            'olama_manage_attendance',
-        );
-
-        foreach (array('administrator', 'editor', 'supervisor') as $role_name) {
-            $role = get_role($role_name);
-            if ($role) {
-                foreach ($manager_caps as $cap) {
-                    $role->add_cap($cap);
-                }
-            }
-        }
-        foreach (array('author', 'teacher', 'assistant') as $role_name) {
-            $role = get_role($role_name);
-            if ($role) {
-                foreach ($teacher_caps as $cap) {
-                    $role->add_cap($cap);
-                }
-            }
-        }
     }
 
     public function register_capability_group($groups) {

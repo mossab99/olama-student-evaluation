@@ -33,6 +33,7 @@ final class Olama_Student_Evaluation_Plugin {
         load_plugin_textdomain('olama-student-evaluation', false, dirname(plugin_basename(OLAMA_STUDENT_EVALUATION_FILE)) . '/languages');
         add_action('admin_notices', array($this, 'dependency_notice'));
         add_filter('olama_core_capability_groups', array($this, 'register_capability_group'), 30);
+        add_action('olama_users_register_modules', array($this, 'register_users_module'), 30);
         add_filter('olama_dashboard_cards', array($this, 'register_hub_card'), 20);
 
         $this->available = $this->dependencies_available();
@@ -76,6 +77,49 @@ final class Olama_Student_Evaluation_Plugin {
             ),
         );
         return $groups;
+    }
+
+    /**
+     * Register tabs and actions explicitly because they are not WordPress
+     * submenus and therefore cannot be discovered by Olama Users.
+     */
+    public function register_users_module() {
+        if (!function_exists('olama_users_register_module')) {
+            return;
+        }
+
+        olama_users_register_module(array(
+            'id' => 'olama_student_evaluation',
+            'plugin' => 'olama-student-evaluation',
+            'label' => __('Student Evaluation', 'olama-student-evaluation'),
+            'capability' => 'olama_access_evaluation',
+            'items' => array(
+                array(
+                    'id' => 'student_evaluation.evaluate',
+                    'type' => 'tab',
+                    'label' => __('Evaluate Students', 'olama-student-evaluation'),
+                    'capability' => 'olama_manage_evaluation_students',
+                ),
+                array(
+                    'id' => 'student_evaluation.progress',
+                    'type' => 'tab',
+                    'label' => __('Manage Evaluation Progress', 'olama-student-evaluation'),
+                    'capability' => 'olama_manage_evaluation_progress',
+                ),
+                array(
+                    'id' => 'student_evaluation.structures',
+                    'type' => 'tab',
+                    'label' => __('Manage Evaluation Structures', 'olama-student-evaluation'),
+                    'capability' => 'olama_manage_evaluation_mgmt',
+                ),
+                array(
+                    'id' => 'student_evaluation.attendance',
+                    'type' => 'tab',
+                    'label' => __('Manage Student Attendance', 'olama-student-evaluation'),
+                    'capability' => 'olama_manage_attendance',
+                ),
+            ),
+        ));
     }
 
     public function register_hub_card($cards) {

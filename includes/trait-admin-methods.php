@@ -27,6 +27,10 @@ trait Olama_Student_Evaluation_Admin_Methods
     function handle_kg_report_print()
         {
             if (isset($_GET['action']) && $_GET['action'] === 'ev_print_report' && isset($_GET['evaluation_id'])) {
+                if (!Olama_School_Permissions::can('olama_manage_evaluation_students')
+                    && !Olama_School_Permissions::can('olama_manage_evaluation_progress')) {
+                    wp_die(esc_html__('You are not allowed to view evaluation reports.', 'olama-student-evaluation'), '', array('response' => 403));
+                }
                 Olama_School_EV_Report::render_report(intval($_GET['evaluation_id']));
                 exit;
             }
@@ -40,6 +44,10 @@ trait Olama_Student_Evaluation_Admin_Methods
     function ajax_get_ev_progress_students()
         {
             check_ajax_referer('olama_admin_nonce', 'nonce');
+
+            if (!Olama_School_Permissions::can('olama_manage_evaluation_progress')) {
+                wp_die(esc_html__('Unauthorized', 'olama-student-evaluation'), '', array('response' => 403));
+            }
 
             $template_id = isset($_GET['template_id']) ? intval($_GET['template_id']) : 0;
             $section_id = isset($_GET['section_id']) ? intval($_GET['section_id']) : 0;
@@ -113,6 +121,10 @@ trait Olama_Student_Evaluation_Admin_Methods
     function ajax_get_student_evaluation()
         {
             check_ajax_referer('olama_admin_nonce', 'nonce');
+
+            if (!Olama_School_Permissions::can('olama_manage_evaluation_progress')) {
+                wp_die(esc_html__('Unauthorized', 'olama-student-evaluation'), '', array('response' => 403));
+            }
 
             $student_id = intval($_GET['student_id']);
             $template_id = intval($_GET['template_id']);
@@ -389,6 +401,9 @@ trait Olama_Student_Evaluation_Admin_Methods
                         "SELECT student_uid FROM {$wpdb->prefix}olama_students WHERE id = %d",
                         $student_id
                     ));
+                    if (!$student_uid) {
+                        continue;
+                    }
 
                     $res = $wpdb->query($wpdb->prepare(
                         "INSERT INTO $table (student_id, student_uid, academic_year_id, semester_id, section_id, attendance_date, status, reason, recorded_by)
@@ -481,6 +496,9 @@ trait Olama_Student_Evaluation_Admin_Methods
                 "SELECT student_uid FROM {$wpdb->prefix}olama_students WHERE id = %d",
                 $student_id
             ));
+            if (!$student_uid) {
+                wp_send_json_error(__('Student not found in Olama Core.', 'olama-student-evaluation'), 400);
+            }
 
             $result = $wpdb->query($wpdb->prepare(
                 "INSERT INTO $table (student_id, student_uid, academic_year_id, semester_id, section_id, attendance_date, status, recorded_by)

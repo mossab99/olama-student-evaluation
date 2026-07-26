@@ -25,12 +25,14 @@ if ($section_id && $active_year) {
     ));
     global $wpdb;
     $records = $wpdb->get_results($wpdb->prepare(
-        "SELECT student_id, status, reason FROM {$wpdb->prefix}olama_attendance WHERE section_id = %d AND attendance_date = %s",
+        "SELECT student_uid, status, reason FROM {$wpdb->prefix}olama_attendance WHERE section_id = %d AND attendance_date = %s",
         $section_id,
         $attendance_date
     ));
     foreach ($records as $record) {
-        $attendance_records[$record->student_id] = $record;
+        if (!empty($record->student_uid)) {
+            $attendance_records[$record->student_uid] = $record;
+        }
     }
 }
 ?>
@@ -96,7 +98,7 @@ if ($section_id && $active_year) {
                 <?php if (!$students): ?>
                     <tr><td colspan="4"><?php echo esc_html(Olama_School_Helpers::translate('No students found in this section.')); ?></td></tr>
                 <?php else: foreach ($students as $student):
-                    $record = $attendance_records[$student->id] ?? null;
+                    $record = $attendance_records[$student->student_uid] ?? null;
                     $status = $record ? $record->status : 'present';
                     $reason = $record ? $record->reason : '';
                 ?>

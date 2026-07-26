@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Olama Student Evaluation
  * Description: Standalone student evaluation, progress tracking, and evaluation structure management for Olama School.
- * Version: 1.1.1
+ * Version: 1.2.0
  * Author: Olama
  * Text Domain: olama-student-evaluation
  * Requires Plugins: olama-school
@@ -12,7 +12,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('OLAMA_STUDENT_EVALUATION_VERSION', '1.1.1');
+define('OLAMA_STUDENT_EVALUATION_VERSION', '1.2.0');
 define('OLAMA_STUDENT_EVALUATION_FILE', __FILE__);
 define('OLAMA_STUDENT_EVALUATION_PATH', plugin_dir_path(__FILE__));
 define('OLAMA_STUDENT_EVALUATION_URL', plugin_dir_url(__FILE__));

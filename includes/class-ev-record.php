@@ -25,13 +25,25 @@ class Olama_School_EV_Record
             ));
         }
 
-        $query = "SELECT * FROM {$wpdb->prefix}olama_ev_records 
-                  WHERE student_id = %d AND academic_year_id = %d AND semester_id = %d AND template_id = %d AND context_type = %s";
-        $params = array($student_id, $year_id, $semester_id, $template_id, $context_type);
+        $student_uid = self::get_student_uid($student_id);
+        $query = "SELECT * FROM {$wpdb->prefix}olama_ev_records WHERE ";
+        if ($student_uid !== '') {
+            $query .= "student_uid = %s";
+            $params = array($student_uid);
+        } else {
+            // Legacy fallback for records created before Core UIDs were stored.
+            $query .= "student_id = %d";
+            $params = array($student_id);
+        }
+        $query .= " AND academic_year_id = %d AND semester_id = %d AND template_id = %d AND context_type = %s";
+        $params[] = $year_id;
+        $params[] = $semester_id;
+        $params[] = $template_id;
+        $params[] = $context_type;
 
-        if ($subject_id) {
+        if ($subject_id !== null) {
             $query .= " AND subject_id = %d";
-            $params[] = $subject_id;
+            $params[] = absint($subject_id);
         }
 
         return $wpdb->get_row($wpdb->prepare($query, $params));
@@ -46,29 +58,27 @@ class Olama_School_EV_Record
 
         $context_type = sanitize_text_field($data['context_type'] ?? 'student');
         $student_id = isset($data['student_id']) ? intval($data['student_id']) : null;
-        $student_uid = null;
+        $student_uid = $student_id ? self::get_student_uid($student_id) : '';
+        $related_entity_id = isset($data['related_entity_id']) ? absint($data['related_entity_id']) : 0;
 
-        if ($student_id) {
-            $student = $wpdb->get_row($wpdb->prepare(
-                "SELECT student_uid FROM {$wpdb->prefix}olama_students WHERE id = %d",
-                $student_id
-            ));
-            if ($student) {
-                $student_uid = $student->student_uid;
-            }
+        if ($context_type === 'student' && $student_uid === '') {
+            return new WP_Error('student_not_found', __('The selected student is not available in Olama Core.', 'olama-student-evaluation'));
+        }
+        if ($context_type === 'supervisor' && !$related_entity_id) {
+            return new WP_Error('supervisor_visit_required', __('A valid supervisor visit is required.', 'olama-student-evaluation'));
         }
 
         $fields = array(
             'template_id' => intval($data['template_id']),
             'student_id' => $student_id,
-            'student_uid' => $student_uid,
-            'subject_id' => isset($data['subject_id']) ? intval($data['subject_id']) : null,
+            'student_uid' => $student_uid !== '' ? $student_uid : null,
+            'subject_id' => !empty($data['subject_id']) ? intval($data['subject_id']) : 0,
             'teacher_id' => get_current_user_id(),
             'academic_year_id' => intval($data['academic_year_id']),
             'semester_id' => intval($data['semester_id']),
             'context_type' => $context_type,
             'related_entity_type' => sanitize_text_field($data['related_entity_type'] ?? null),
-            'related_entity_id' => isset($data['related_entity_id']) ? intval($data['related_entity_id']) : null,
+            'related_entity_id' => $related_entity_id ?: null,
             'status' => sanitize_text_field($data['status'] ?? 'draft'),
             'supervisor_comments' => isset($data['supervisor_comments']) ? sanitize_textarea_field($data['supervisor_comments']) : null
         );
@@ -79,16 +89,51 @@ class Olama_School_EV_Record
             $fields['semester_id'],
             $fields['template_id'],
             $fields['context_type'],
-            $fields['related_entity_id']
+            $fields['related_entity_id'],
+            $fields['subject_id']
         );
 
         if ($existing) {
             $wpdb->update("{$wpdb->prefix}olama_ev_records", $fields, array('id' => $existing->id));
             return $existing->id;
         } else {
-            $wpdb->insert("{$wpdb->prefix}olama_ev_records", $fields);
-            return $wpdb->insert_id;
+            $inserted = $wpdb->insert("{$wpdb->prefix}olama_ev_records", $fields);
+            if ($inserted !== false) {
+                return $wpdb->insert_id;
+            }
+
+            // A concurrent save may have won the unique-key race.
+            $existing = self::get_evaluation(
+                $fields['student_id'],
+                $fields['academic_year_id'],
+                $fields['semester_id'],
+                $fields['template_id'],
+                $fields['context_type'],
+                $fields['related_entity_id'],
+                $fields['subject_id']
+            );
+            if ($existing) {
+                $wpdb->update("{$wpdb->prefix}olama_ev_records", $fields, array('id' => $existing->id));
+                return $existing->id;
+            }
+
+            return new WP_Error('evaluation_save_failed', $wpdb->last_error ?: __('Evaluation could not be saved.', 'olama-student-evaluation'));
         }
+    }
+
+    public static function get_student_uid($student_id)
+    {
+        global $wpdb;
+
+        $student_id = absint($student_id);
+        if (!$student_id) {
+            return '';
+        }
+
+        return (string) $wpdb->get_var($wpdb->prepare(
+            "SELECT student_uid FROM {$wpdb->prefix}olama_students WHERE id = %d",
+            $student_id
+        ));
     }
 
     /**
@@ -187,6 +232,10 @@ class Olama_School_EV_Record
         $result = \Olama\Services\EvaluationScoringService::calculate_score($scores);
 
         // Update supervisor_visits table
+        if (!class_exists('\\Olama\\Services\\SupervisorVisitService')) {
+            return;
+        }
+
         \Olama\Services\SupervisorVisitService::update_visit_completion(
             $evaluation->related_entity_id,
             $evaluation->status === 'published' ? 'completed' : 'planned',
@@ -237,11 +286,13 @@ class Olama_School_EV_Record
         // Orphaned if student, template, year, or semester is missing
         $orphaned_ids = $wpdb->get_col(
             "SELECT r.id FROM {$wpdb->prefix}olama_ev_records r
-             LEFT JOIN {$wpdb->prefix}olama_students s ON r.student_id = s.id
+             LEFT JOIN {$wpdb->prefix}olama_students s
+                ON r.student_uid = s.student_uid
+                OR ((r.student_uid IS NULL OR r.student_uid = '') AND r.student_id = s.id)
              LEFT JOIN {$wpdb->prefix}olama_ev_templates t ON r.template_id = t.id
              LEFT JOIN {$wpdb->prefix}olama_academic_years y ON r.academic_year_id = y.id
              LEFT JOIN {$wpdb->prefix}olama_semesters sem ON r.semester_id = sem.id
-             WHERE s.id IS NULL 
+             WHERE (r.context_type = 'student' AND s.id IS NULL)
                 OR t.id IS NULL 
                 OR y.id IS NULL 
                 OR (r.semester_id IS NOT NULL AND sem.id IS NULL)"

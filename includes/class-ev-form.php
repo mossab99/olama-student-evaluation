@@ -33,7 +33,10 @@ class Olama_School_EV_Form
 
         if ($context_type === 'supervisor' && $visit_id) {
             global $wpdb;
-            $visit = $wpdb->get_row($wpdb->prepare(
+            $visits_table = $wpdb->prefix . 'olama_supervisor_visits';
+            $supervision_available = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $visits_table)) === $visits_table;
+            if ($supervision_available) {
+                $visit = $wpdb->get_row($wpdb->prepare(
                 "SELECT v.*, s.academic_year_id, s.semester_id, s.teacher_id, t.template_name 
                  FROM {$wpdb->prefix}olama_supervisor_visits v
                  JOIN {$wpdb->prefix}olama_schedule s ON v.schedule_id = s.id
@@ -41,7 +44,8 @@ class Olama_School_EV_Form
                  LEFT JOIN {$wpdb->prefix}olama_ev_templates t ON r.template_id = t.id
                  WHERE v.id = %d",
                 $visit_id
-            ));
+                ));
+            }
 
             if ($visit) {
                 $selected_year_id = $visit->academic_year_id;
@@ -114,13 +118,20 @@ class Olama_School_EV_Form
      */
     public function handle_save()
     {
-        if (!isset($_POST['olama_ev_save_eval']) || !is_user_logged_in()) {
+        if (!isset($_POST['olama_ev_save_eval'])) {
             return;
+        }
+
+        if (!Olama_School_Permissions::can('olama_manage_evaluation_students')) {
+            wp_die(esc_html__('You are not allowed to save evaluations.', 'olama-student-evaluation'), '', array('response' => 403));
         }
 
         check_admin_referer('olama_ev_save', 'olama_ev_save');
 
         $evaluation_id = Olama_School_EV_Record::save_evaluation($_POST);
+        if (is_wp_error($evaluation_id)) {
+            wp_die(esc_html($evaluation_id->get_error_message()), '', array('response' => 400));
+        }
 
         if (isset($_POST['scores']) && is_array($_POST['scores'])) {
             foreach ($_POST['scores'] as $indicator_id => $data) {
@@ -148,12 +159,19 @@ class Olama_School_EV_Form
     {
         check_ajax_referer('olama_kg_evaluation_nonce', 'nonce');
 
+        if (!Olama_School_Permissions::can('olama_manage_evaluation_students')) {
+            wp_send_json_error(__('Unauthorized', 'olama-student-evaluation'), 403);
+        }
+
         if (!isset($_POST['evaluation_data'])) {
             wp_send_json_error('No data');
         }
 
         $data = $_POST['evaluation_data'];
         $evaluation_id = Olama_School_EV_Record::save_evaluation($data);
+        if (is_wp_error($evaluation_id)) {
+            wp_send_json_error($evaluation_id->get_error_message(), 400);
+        }
 
         if (isset($data['scores']) && is_array($data['scores'])) {
             foreach ($data['scores'] as $score_entry) {

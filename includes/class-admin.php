@@ -5,6 +5,8 @@ if (!defined('ABSPATH')) {
 }
 
 class Olama_Student_Evaluation_Admin extends Olama_School_Admin {
+    use Olama_Student_Evaluation_Admin_Methods;
+
     public function __construct() {
         add_action('admin_menu', array($this, 'register_menu'), 30);
         add_action('admin_enqueue_scripts', array($this, 'enqueue_assets'));
@@ -73,6 +75,13 @@ class Olama_Student_Evaluation_Admin extends Olama_School_Admin {
             return;
         }
         parent::enqueue_admin_assets('olama-school_student-evaluation');
+        wp_enqueue_script(
+            'olama-student-evaluation-admin',
+            OLAMA_STUDENT_EVALUATION_URL . 'assets/js/admin.js',
+            array('jquery'),
+            OLAMA_STUDENT_EVALUATION_VERSION,
+            true
+        );
     }
 
     public function render_page() {

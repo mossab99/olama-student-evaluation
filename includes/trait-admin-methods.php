@@ -393,8 +393,11 @@ trait Olama_Student_Evaluation_Admin_Methods
                 }
 
                 foreach ($attendance_data as $student_id => $data) {
-                    $status = sanitize_text_field($data['status'] ?? 'present');
-                    $reason = sanitize_text_field($data['reason'] ?? '');
+                    $status = sanitize_text_field($data['status'] ?? 'incomplete');
+                    if (!in_array($status, array('present', 'absent', 'incomplete'), true)) {
+                        $status = 'incomplete';
+                    }
+                    $reason = $status === 'absent' ? sanitize_text_field($data['reason'] ?? '') : '';
 
                     // Fetch student_uid for stable linkage
                     $student_uid = $wpdb->get_var($wpdb->prepare(

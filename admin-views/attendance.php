@@ -99,13 +99,14 @@ if ($section_id && $active_year) {
                     <tr><td colspan="4"><?php echo esc_html(Olama_School_Helpers::translate('No students found in this section.')); ?></td></tr>
                 <?php else: foreach ($students as $student):
                     $record = $attendance_records[$student->student_uid] ?? null;
-                    $status = $record ? $record->status : 'present';
+                    $status = $record && in_array($record->status, array('present', 'absent'), true) ? $record->status : 'incomplete';
                     $reason = $record ? $record->reason : '';
                 ?>
                     <tr>
                         <td><?php echo esc_html($student->student_uid); ?></td>
                         <td><strong><?php echo esc_html($student->student_name); ?></strong></td>
                         <td><select name="attendance[<?php echo esc_attr($student->id); ?>][status]" class="attendance-status-selector">
+                            <option value="incomplete" <?php selected($status, 'incomplete'); ?>><?php echo esc_html(Olama_School_Helpers::translate('Not Completed')); ?></option>
                             <option value="present" <?php selected($status, 'present'); ?>><?php echo esc_html(Olama_School_Helpers::translate('Present')); ?></option>
                             <option value="absent" <?php selected($status, 'absent'); ?>><?php echo esc_html(Olama_School_Helpers::translate('Absent')); ?></option>
                         </select></td>

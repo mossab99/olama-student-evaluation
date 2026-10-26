@@ -22,6 +22,7 @@ if ($section_id && $active_year) {
     $students = Olama_School_Student::get_students(array(
         'academic_year_id' => $active_year->id,
         'section_id' => $section_id,
+        'attendance_only' => true,
     ));
     global $wpdb;
     $records = $wpdb->get_results($wpdb->prepare(

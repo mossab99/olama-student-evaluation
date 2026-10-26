@@ -75,6 +75,21 @@ class Olama_Student_Evaluation_Admin extends Olama_School_Admin {
             return;
         }
         parent::enqueue_admin_assets('olama-school_student-evaluation');
+        if ('student_files' === $this->get_active_tab($this->get_allowed_tabs())) {
+            wp_enqueue_style(
+                'olama-student-files',
+                OLAMA_STUDENT_EVALUATION_URL . 'assets/css/student-files.css',
+                array(),
+                OLAMA_STUDENT_EVALUATION_VERSION
+            );
+            wp_enqueue_script(
+                'olama-student-files',
+                OLAMA_STUDENT_EVALUATION_URL . 'assets/js/student-files.js',
+                array(),
+                OLAMA_STUDENT_EVALUATION_VERSION,
+                true
+            );
+        }
         wp_enqueue_script(
             'olama-student-evaluation-admin',
             OLAMA_STUDENT_EVALUATION_URL . 'assets/js/admin.js',
@@ -84,16 +99,13 @@ class Olama_Student_Evaluation_Admin extends Olama_School_Admin {
         );
     }
 
-    public function render_page() {
-        if (!Olama_School_Permissions::can('olama_access_evaluation')) {
-            wp_die(esc_html__('You do not have permission to access Student Evaluation.', 'olama-student-evaluation'), '', array('response' => 403));
-        }
-
+    private function get_allowed_tabs() {
         $tabs_config = array(
             'student_evaluation' => array('label' => Olama_School_Helpers::translate('Student Evaluation'), 'cap' => 'olama_manage_evaluation_students'),
             'evaluation_progress' => array('label' => Olama_School_Helpers::translate('Evaluation Progress'), 'cap' => 'olama_manage_evaluation_progress'),
             'evaluation_mgmt' => array('label' => Olama_School_Helpers::translate('Evaluation Management'), 'cap' => 'olama_manage_evaluation_mgmt'),
             'student_attendance' => array('label' => Olama_School_Helpers::translate('Student Attendance'), 'cap' => 'olama_manage_attendance'),
+            'student_files' => array('label' => Olama_Student_Evaluation_Student_Files_Page::label('Student Files'), 'cap' => 'olama_view_student_files'),
         );
         $allowed_tabs = array();
         foreach ($tabs_config as $id => $tab) {
@@ -101,14 +113,25 @@ class Olama_Student_Evaluation_Admin extends Olama_School_Admin {
                 $allowed_tabs[$id] = $tab;
             }
         }
+        return $allowed_tabs;
+    }
+
+    private function get_active_tab($allowed_tabs) {
+        $requested_tab = isset($_GET['tab']) && is_scalar($_GET['tab']) ? sanitize_key(wp_unslash($_GET['tab'])) : '';
+        return isset($allowed_tabs[$requested_tab]) ? $requested_tab : array_key_first($allowed_tabs);
+    }
+
+    public function render_page() {
+        if (!Olama_School_Permissions::can('olama_access_evaluation')) {
+            wp_die(esc_html__('You do not have permission to access Student Evaluation.', 'olama-student-evaluation'), '', array('response' => 403));
+        }
+
+        $allowed_tabs = $this->get_allowed_tabs();
         if (!$allowed_tabs) {
             wp_die(esc_html__('You do not have access to an evaluation section.', 'olama-student-evaluation'), '', array('response' => 403));
         }
 
-        $active_tab = isset($_GET['tab']) ? sanitize_key(wp_unslash($_GET['tab'])) : array_key_first($allowed_tabs);
-        if (!isset($allowed_tabs[$active_tab])) {
-            $active_tab = array_key_first($allowed_tabs);
-        }
+        $active_tab = $this->get_active_tab($allowed_tabs);
         ?>
         <div class="wrap olama-school-wrap">
             <h1><?php esc_html_e('Student Evaluation', 'olama-student-evaluation'); ?></h1>
@@ -122,7 +145,9 @@ class Olama_Student_Evaluation_Admin extends Olama_School_Admin {
             </h2>
             <div class="olama-tab-content" style="margin-top:20px;">
                 <?php
-                if ('student_attendance' === $active_tab) {
+                if ('student_files' === $active_tab) {
+                    Olama_Student_Evaluation_Student_Files_Page::render();
+                } elseif ('student_attendance' === $active_tab) {
                     include OLAMA_STUDENT_EVALUATION_PATH . 'admin-views/attendance.php';
                 } elseif ('evaluation_mgmt' === $active_tab) {
                     $this->render_evaluation_mgmt_page_content();

@@ -25,6 +25,8 @@ require_once OLAMA_STUDENT_EVALUATION_PATH . 'includes/class-ev-manager.php';
 require_once OLAMA_STUDENT_EVALUATION_PATH . 'includes/class-ev-record.php';
 require_once OLAMA_STUDENT_EVALUATION_PATH . 'includes/class-ev-report.php';
 require_once OLAMA_STUDENT_EVALUATION_PATH . 'includes/class-ev-template.php';
+require_once OLAMA_STUDENT_EVALUATION_PATH . 'includes/class-student-files.php';
+require_once OLAMA_STUDENT_EVALUATION_PATH . 'includes/class-student-files-page.php';
 require_once OLAMA_STUDENT_EVALUATION_PATH . 'includes/trait-admin-methods.php';
 require_once OLAMA_STUDENT_EVALUATION_PATH . 'includes/class-plugin.php';
 

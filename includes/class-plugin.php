@@ -74,6 +74,7 @@ final class Olama_Student_Evaluation_Plugin {
                 'olama_manage_evaluation_progress' => __('Manage Evaluation Progress', 'olama-student-evaluation'),
                 'olama_manage_evaluation_mgmt' => __('Manage Evaluation Structures', 'olama-student-evaluation'),
                 'olama_manage_attendance' => __('Manage Student Attendance', 'olama-student-evaluation'),
+                'olama_view_student_files' => Olama_Student_Evaluation_Student_Files_Page::label('View Student Files'),
             ),
         );
         return $groups;
@@ -118,6 +119,12 @@ final class Olama_Student_Evaluation_Plugin {
                     'label' => __('Manage Student Attendance', 'olama-student-evaluation'),
                     'capability' => 'olama_manage_attendance',
                 ),
+                array(
+                    'id' => 'student_evaluation.student_files',
+                    'type' => 'tab',
+                    'label' => Olama_Student_Evaluation_Student_Files_Page::label('Student Files'),
+                    'capability' => 'olama_view_student_files',
+                ),
             ),
         ));
     }
@@ -151,6 +158,7 @@ final class Olama_Student_Evaluation_Plugin {
                 array('id' => 'student-evaluation.progress', 'label' => __('Evaluation Progress', 'olama-student-evaluation'), 'icon' => 'dashicons-chart-bar', 'url' => admin_url('admin.php?page=olama-student-evaluation&tab=evaluation_progress'), 'capability' => 'olama_manage_evaluation_progress', 'color' => '#2563eb'),
                 array('id' => 'student-evaluation.manage', 'label' => __('Evaluation Management', 'olama-student-evaluation'), 'icon' => 'dashicons-admin-generic', 'url' => admin_url('admin.php?page=olama-student-evaluation&tab=evaluation_mgmt'), 'capability' => 'olama_manage_evaluation_mgmt', 'color' => '#2563eb'),
                 array('id' => 'student-evaluation.attendance', 'label' => __('Student Attendance', 'olama-student-evaluation'), 'icon' => 'dashicons-yes-alt', 'url' => admin_url('admin.php?page=olama-student-evaluation&tab=student_attendance'), 'capability' => 'olama_manage_attendance', 'color' => '#2563eb'),
+                array('id' => 'student-evaluation.student-files', 'label' => Olama_Student_Evaluation_Student_Files_Page::label('Student Files'), 'icon' => 'dashicons-portfolio', 'url' => admin_url('admin.php?page=olama-student-evaluation&tab=student_files'), 'capability' => 'olama_view_student_files', 'color' => '#2563eb'),
             ),
         );
 

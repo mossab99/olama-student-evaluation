@@ -106,7 +106,7 @@ $wpdb->pdo->exec('CREATE TABLE registry_people (
     family_uid TEXT, student_national_no TEXT, birth_place TEXT, birth_date TEXT,
     mother_mobile TEXT, student_status TEXT, student_status_name TEXT
 );
-CREATE TABLE family_contacts (family_uid TEXT PRIMARY KEY, father_mobile TEXT, mother_mobile TEXT);
+CREATE TABLE family_contacts (family_uid TEXT PRIMARY KEY, father_mobile TEXT, mother_mobile TEXT, family_address TEXT, address TEXT);
 CREATE TABLE year_enrollments (
     id INTEGER PRIMARY KEY AUTOINCREMENT, student_uid TEXT, study_year TEXT,
     class_id TEXT, section_id TEXT, class_name TEXT, section_name TEXT,
@@ -161,8 +161,8 @@ foreach (array(
         'core_grade_id' => $section[3], 'core_section_id' => $section[4], 'core_study_year' => $section[5], 'section_name' => 'Local A',
     ));
 }
-$wpdb->insert('family_contacts', array('family_uid' => 'family-one', 'father_mobile' => '0780000000', 'mother_mobile' => '  '));
-$wpdb->insert('family_contacts', array('family_uid' => 'family-two', 'father_mobile' => '0770000000', 'mother_mobile' => '0799999999'));
+$wpdb->insert('family_contacts', array('family_uid' => 'family-one', 'father_mobile' => '0780000000', 'mother_mobile' => '  ', 'family_address' => "  Amman, Street 1\nBuilding 2  ", 'address' => 'Older address'));
+$wpdb->insert('family_contacts', array('family_uid' => 'family-two', 'father_mobile' => '0770000000', 'mother_mobile' => '0799999999', 'family_address' => '  ', 'address' => 'Zarqa, Street 2'));
 
 add_person('A', 'Alice', 'family-one', 'disabled', 'withdrawn');
 add_enrollment('A');
@@ -272,6 +272,9 @@ try {
     expect($alice->national_id === '0012345678' && $alice->birth_place === 'Amman' && $alice->birth_date === '2015-04-09', 'Personal fields retain original values and leading zeroes.');
     expect($alice->father_mobile === '0780000000' && $alice->mother_mobile === '0790000001', 'Family father mobile and student mother fallback are used.');
     expect($by_uid['R']->mother_mobile === '0799999999', 'Family mother mobile takes precedence.');
+    expect($alice->family_address === "Amman, Street 1\nBuilding 2", 'Family address takes precedence and preserves line breaks.');
+    expect($by_uid['R']->family_address === 'Zarqa, Street 2', 'Blank family address falls back to the existing address field.');
+    expect($by_uid['C']->family_address === '' && $by_uid['D']->family_address === '', 'Missing family addresses remain empty.');
     expect($by_uid['C']->father_mobile === '' && $by_uid['C']->mother_mobile === '0790000001', 'Missing families preserve students and mother fallback.');
     expect($by_uid['C']->current_grade === 'Local Grade Five' && $by_uid['C']->current_section === 'Local A', 'Missing enrollment names use validated local labels.');
     expect($alice->current_grade === 'Grade Five' && $alice->current_section === 'A' && $alice->study_year === '2026-2027', 'Current placement uses the selected year and canonical year label.');

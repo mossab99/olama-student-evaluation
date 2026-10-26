@@ -65,7 +65,7 @@ if (!defined('ABSPATH')) {
                         <table class="wp-list-table widefat striped student-files-table">
                             <thead>
                                 <tr>
-                                    <?php foreach (array('Student ID', 'Student Name', 'National ID', 'Place of Birth', 'Date of Birth', 'Father Mobile', 'Mother Mobile', 'Current Grade / Section', 'Previous Grades / Sections', 'Siblings in School') as $column): ?>
+                                    <?php foreach (array('Student ID', 'Student Name', 'National ID', 'Place of Birth', 'Date of Birth', 'Father Mobile', 'Mother Mobile', 'Family Address', 'Current Grade / Section', 'Previous Grades / Sections', 'Siblings in School') as $column): ?>
                                         <th scope="col"><?php echo esc_html($label($column)); ?></th>
                                     <?php endforeach; ?>
                                 </tr>
@@ -84,6 +84,7 @@ if (!defined('ABSPATH')) {
                                         ?></bdi></td>
                                         <td><bdi dir="ltr"><?php echo esc_html($display_value($student->father_mobile)); ?></bdi></td>
                                         <td><bdi dir="ltr"><?php echo esc_html($display_value($student->mother_mobile)); ?></bdi></td>
+                                        <td class="student-files-address"><?php echo esc_html($display_value($student->family_address)); ?></td>
                                         <td>
                                             <?php echo esc_html($placement($student->current_grade, $student->current_section)); ?>
                                             <span class="student-files-year"><bdi><?php echo esc_html($student->study_year); ?></bdi></span>

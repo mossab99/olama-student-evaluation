@@ -28,6 +28,7 @@ class Olama_Student_Evaluation_Student_Files_Page {
             'Date of Birth' => 'تاريخ الولادة',
             'Father Mobile' => 'جوال الأب',
             'Mother Mobile' => 'جوال الأم',
+            'Family Address' => 'عنوان العائلة',
             'Current Grade / Section' => 'الصف / الشعبة الحالية',
             'Previous Grades / Sections' => 'الصفوف / الشعب السابقة',
             'Siblings in School' => 'الإخوة في المدرسة',

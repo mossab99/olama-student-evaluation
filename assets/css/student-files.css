@@ -13,12 +13,13 @@
 .olama-student-files .student-files-print { white-space: nowrap; }
 .olama-student-files .student-files-print .dashicons { vertical-align: middle; font-size: 17px; }
 .olama-student-files .student-files-table-scroll { overflow-x: auto; }
-.olama-student-files .student-files-table { border: 0; min-width: 1460px; table-layout: auto; }
+.olama-student-files .student-files-table { border: 0; min-width: 1660px; table-layout: auto; }
 .olama-student-files .student-files-table th { background: #f0f6fc; font-weight: 600; white-space: nowrap; padding: 12px; }
 .olama-student-files .student-files-table td { padding: 12px; vertical-align: top; }
 .olama-student-files .student-files-table th,
 .olama-student-files .student-files-table td { text-align: start; }
 .olama-student-files .student-files-name { min-width: 170px; }
+.olama-student-files .student-files-address { min-width: 180px; max-width: 260px; white-space: pre-line; overflow-wrap: anywhere; }
 .olama-student-files .student-files-id { white-space: nowrap; }
 .olama-student-files .student-files-list { margin: 0; padding: 0; list-style: none; }
 .olama-student-files .student-files-list li + li { margin-top: 10px; }
@@ -40,7 +41,8 @@
     .olama-student-files .student-files-table { width: 100%; min-width: 0; border-collapse: collapse; }
     .olama-student-files .student-files-table th,
     .olama-student-files .student-files-table td { padding: 5px; font-size: 9px; border: 1px solid #c3c4c7; white-space: normal; overflow-wrap: anywhere; }
-    .olama-student-files .student-files-name { min-width: 0; }
+    .olama-student-files .student-files-name,
+    .olama-student-files .student-files-address { min-width: 0; }
     .olama-student-files .student-files-year { font-size: 8px; }
     .olama-student-files .student-files-table thead { display: table-header-group; }
     .olama-student-files .student-files-table tr { break-inside: avoid; }

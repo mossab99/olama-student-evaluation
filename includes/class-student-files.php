@@ -85,6 +85,7 @@ class Olama_Student_Evaluation_Student_Files
                     s.birth_place, s.birth_date, s.family_uid,
                     f.father_mobile,
                     COALESCE(NULLIF(TRIM(f.mother_mobile), ''), s.mother_mobile) AS mother_mobile,
+                    COALESCE(NULLIF(TRIM(f.family_address), ''), NULLIF(TRIM(f.address), '')) AS family_address,
                     COALESCE(NULLIF(TRIM(y.class_name), ''), %s) AS current_grade,
                     COALESCE(NULLIF(TRIM(y.section_name), ''), %s) AS current_section,
                     y.school_id, y.school_name
@@ -120,7 +121,7 @@ class Olama_Student_Evaluation_Student_Files
             }
             $student = new stdClass();
             $student->id = (int) $row->id;
-            foreach (array('student_uid', 'student_name', 'national_id', 'birth_place', 'birth_date', 'father_mobile', 'mother_mobile', 'current_grade', 'current_section') as $field) {
+            foreach (array('student_uid', 'student_name', 'national_id', 'birth_place', 'birth_date', 'father_mobile', 'mother_mobile', 'family_address', 'current_grade', 'current_section') as $field) {
                 $student->{$field} = (string) $row->{$field};
             }
             $student->study_year = $study_year;

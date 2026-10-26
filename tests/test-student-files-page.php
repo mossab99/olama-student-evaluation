@@ -131,6 +131,7 @@ function student_files_page_fixture(array $options = array()) {
         'birth_date' => '2014-02-03',
         'father_mobile' => '+962 <father>',
         'mother_mobile' => '079" onclick="alert(1)',
+        'family_address' => "Amman <address>\nBuilding & 12",
         'current_grade' => 'Grade 7 <advanced>',
         'current_section' => 'A & B',
         'study_year' => '2026-2027',
@@ -211,15 +212,15 @@ function student_files_page_tests() {
     student_files_page_check(Olama_Student_Evaluation_Student_Files::$report_calls === array(array(7, 71, 26)), 'Valid filters pass grade, section and active year to the report API.');
     student_files_page_check(Olama_School_Section::$calls === array(array(7, 26)), 'Section choices are scoped to grade and active academic year.');
     student_files_page_contains('dir="ltr"', $html, 'English report uses left-to-right layout.');
-    foreach (array('Student ID', 'Student Name', 'National ID', 'Place of Birth', 'Date of Birth', 'Father Mobile', 'Mother Mobile', 'Current Grade / Section', 'Previous Grades / Sections', 'Siblings in School') as $heading) {
+    foreach (array('Student ID', 'Student Name', 'National ID', 'Place of Birth', 'Date of Birth', 'Father Mobile', 'Mother Mobile', 'Family Address', 'Current Grade / Section', 'Previous Grades / Sections', 'Siblings in School') as $heading) {
         student_files_page_contains('<th scope="col">' . $heading . '</th>', $html, 'Report includes the column ' . $heading);
     }
-    student_files_page_check(substr_count($html, '<th scope="col">') === 10, 'Report has exactly the ten requested columns.');
+    student_files_page_check(substr_count($html, '<th scope="col">') === 11, 'Report includes the family address as the eleventh column.');
     foreach (array('S-0007', '0001234567', '03/02/2014', '2026-2027', '2025-2026', '2024-2025') as $value) {
         student_files_page_contains($value, $html, 'Report renders expected student/date/year value ' . $value);
     }
     student_files_page_check(strpos($html, 'Grade 6') < strpos($html, 'Grade 5') && strpos($html, '2025-2026') < strpos($html, '2024-2025'), 'Previous placements retain chronological order with corresponding school years.');
-    foreach (array('Student <script>alert("name")</script>', 'Amman <img src=x onerror=alert(1)>', '+962 <father>', '079" onclick="alert(1)', 'Grade 7 <advanced>', 'A & B', 'C <previous>', 'Sibling <b>one</b>', 'Sibling & two') as $value) {
+    foreach (array('Student <script>alert("name")</script>', 'Amman <img src=x onerror=alert(1)>', '+962 <father>', '079" onclick="alert(1)', "Amman <address>\nBuilding & 12", 'Grade 7 <advanced>', 'A & B', 'C <previous>', 'Sibling <b>one</b>', 'Sibling & two') as $value) {
         student_files_page_contains(esc_html($value), $html, 'Database value is escaped: ' . $value);
         student_files_page_absent($value, $html, 'Unescaped database value must not enter markup: ' . $value);
     }
@@ -230,19 +231,20 @@ function student_files_page_tests() {
     student_files_page_fixture(array('arabic' => true));
     $html = student_files_page_capture(array('Olama_Student_Evaluation_Student_Files_Page', 'render'));
     student_files_page_contains('dir="rtl"', $html, 'Arabic report uses right-to-left layout.');
-    foreach (array('ملفات الطلاب', 'رقم الطالب', 'اسم الطالب', 'الرقم الوطني', 'مكان الولادة', 'تاريخ الولادة', 'جوال الأب', 'جوال الأم', 'الصف / الشعبة الحالية', 'الصفوف / الشعب السابقة', 'الإخوة في المدرسة') as $label) {
+    foreach (array('ملفات الطلاب', 'رقم الطالب', 'اسم الطالب', 'الرقم الوطني', 'مكان الولادة', 'تاريخ الولادة', 'جوال الأب', 'جوال الأم', 'عنوان العائلة', 'الصف / الشعبة الحالية', 'الصفوف / الشعب السابقة', 'الإخوة في المدرسة') as $label) {
         student_files_page_contains($label, $html, 'Arabic label is rendered: ' . $label);
     }
 
     student_files_page_fixture();
     $student = Olama_Student_Evaluation_Student_Files::$report[0];
-    foreach (array('national_id', 'birth_place', 'father_mobile', 'mother_mobile') as $field) { $student->$field = ''; }
+    foreach (array('national_id', 'birth_place', 'father_mobile', 'mother_mobile', 'family_address') as $field) { $student->$field = ''; }
     $student->history = array();
     $student->siblings = array();
     foreach (array('0000-00-00', '2014-02-30', '2014-02-03<script>', '') as $date) {
         $student->birth_date = $date;
         $html = student_files_page_capture(array('Olama_Student_Evaluation_Student_Files_Page', 'render'));
-        student_files_page_check(substr_count($html, 'Not recorded') >= 5, 'Missing fields and invalid birth dates have explicit placeholders.');
+        student_files_page_check(substr_count($html, 'Not recorded') >= 6, 'Missing fields and invalid birth dates have explicit placeholders.');
+        student_files_page_contains('<td class="student-files-address">Not recorded</td>', $html, 'Missing family address has an explicit placeholder.');
         student_files_page_contains('No previous enrollment recorded.', $html, 'Missing history has an explicit placeholder.');
         student_files_page_contains('None recorded', $html, 'Missing sibling names have an explicit placeholder.');
         student_files_page_absent('03/02/2014', $html, 'Malformed birth dates cannot display an invented valid date.');
